@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { generateOtpCode, otpExpiry } from "@/lib/auth/session";
+import { sendOtpEmail } from "@/lib/auth/send-otp";
 
 export const runtime = "nodejs";
 
@@ -11,9 +12,8 @@ const Body = z.object({
 
 /**
  * POST /api/auth/request-code
- * Generates a 6-digit OTP and stores it in the DB.
- * In development (no SMTP configured), the code is returned in the response
- * so it can be displayed on screen. In production, it would be emailed.
+ * Generates a 6-digit OTP, stores it in the DB, and emails it via Resend.
+ * In dev (no RESEND_API_KEY), the code is returned for on-screen display.
  */
 export async function POST(req: NextRequest) {
   let parsed: z.infer<typeof Body>;
@@ -51,15 +51,21 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // In dev (no SMTP), return the code so the UI can display it.
-  // In production, you'd send this via email (Mailtrap, Resend, etc.)
-  const isDev = process.env.NODE_ENV !== "production";
+  // Send the code via email (or return it in dev mode)
+  const result = await sendOtpEmail(email, code);
+
+  if (result.error) {
+    return NextResponse.json(
+      { error: `Failed to send code: ${result.error}` },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,
-    message: isDev
-      ? `Code generated. Check the UI (dev mode shows the code).`
-      : "Code sent to your email.",
-    ...(isDev ? { devCode: code } : {}),
+    message: result.sent
+      ? "Code sent to your email."
+      : "Code generated (dev mode — check the UI).",
+    ...(result.devCode ? { devCode: result.devCode } : {}),
   });
 }
