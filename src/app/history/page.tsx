@@ -1,15 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prismaRepository } from "@/lib/storage/prisma-repository";
 import { VerdictBadge } from "@/components/VerdictBadge";
+import { getSession } from "@/lib/auth/get-session";
 import { Plus, Quote, BookOpen, Clock, AlertTriangle, ArrowRight, ScanSearch } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?redirect=/history");
+
   let items: Awaited<ReturnType<typeof prismaRepository.list>> = [];
   let error: string | null = null;
   try {
-    items = await prismaRepository.list(50, 0);
+    items = await prismaRepository.list(50, 0, session.userId);
   } catch (err) {
     error = err instanceof Error ? err.message : "Failed to load history";
   }

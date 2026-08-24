@@ -77,7 +77,7 @@ export async function callChat({ apiKey, endpoint, model, prompt, systemPrompt, 
 export async function streamChat({ apiKey, endpoint, model, prompt, systemPrompt, temperature = 0.2, maxTokens, timeoutMs = 300_000, onToken }: ChatOptions & { onToken: (chunk: string) => void }): Promise<string> {
   let lastError: Error | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await sleep(1000 * attempt * 2); // 2s, 4s backoff
+    if (attempt > 0) await sleep(1000 * attempt * 2);
     try {
       const res = await fetch(endpoint, {
         method: "POST",
@@ -94,7 +94,6 @@ export async function streamChat({ apiKey, endpoint, model, prompt, systemPrompt
       if (!res.ok || !res.body) {
         const errorBody = await res.text().catch(() => "");
         lastError = new Error(`${model} stream error ${res.status}: ${errorBody.slice(0, 200)}`);
-        // Retry on 429 (rate limit) or 5xx (server error, including 503 overload).
         if (res.status !== 429 && res.status < 500) break;
         continue;
       }

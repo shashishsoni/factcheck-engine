@@ -21,8 +21,6 @@ export function NeuralNode({
   const isDone = state?.status === "done";
 
   const isDebateStep = ["ensemble", "cross-examine", "judge"].includes(config.key);
-  // extract-claims only needs the wide grid once claims are actually present;
-  // during its skeleton/loading phase the medium width fits the small NodeSkeleton.
   const hasClaims = (showcase.steps["extract-claims"]?.claims?.length ?? 0) > 0;
   const isWideGridStep =
     config.key === "gather-evidence" || (config.key === "extract-claims" && hasClaims);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { FactCheckResult, LanguageMode } from "@/lib/types";
 import { VerdictBadge } from "@/components/VerdictBadge";
@@ -28,6 +28,13 @@ export default function CheckPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FactCheckResult | null>(null);
+
+  // Check auth on mount — middleware handles server-side, this handles client nav
+  useEffect(() => {
+    fetch("/api/auth/me").then((r) => r.json()).then((data) => {
+      if (!data.user) router.replace("/login?redirect=/check");
+    }).catch(() => {});
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -193,9 +193,6 @@ export function useShowcaseStream(
     void runStream();
     return () => {
       controller.abort();
-      // Reset so Strict Mode's double-invoke (or remount) can restart the stream.
-      // Without this, lastInputRef === input on the second invoke and the stream
-      // never restarts — leaving the canvas permanently at 0 nodes.
       lastInputRef.current = null;
     };
   }, [input, language]);

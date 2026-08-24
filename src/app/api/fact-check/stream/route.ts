@@ -3,6 +3,7 @@ import { z } from "zod";
 import { verificationEngine } from "@/lib/verification";
 import { prismaRepository } from "@/lib/storage/prisma-repository";
 import { LANGUAGE_MODES, type LanguageMode, type ProgressEvent } from "@/lib/types";
+import { getUserId } from "@/lib/auth/get-session";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const userId = await getUserId();
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
       try {
         const language: LanguageMode = parsed.language;
         const result = await verificationEngine.verify(parsed.input, send, language);
-        const saved = await prismaRepository.save(result);
+        const saved = await prismaRepository.save(result, userId ?? undefined);
 
         // Send the final result with the saved ID
         controller.enqueue(

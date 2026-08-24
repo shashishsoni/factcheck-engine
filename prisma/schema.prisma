@@ -8,11 +8,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// A registered user. Email-only signup via one-time OTP code.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  factChecks FactCheck[]
+  otps       OtpCode[]
+}
+
+// One-time login codes for passwordless email auth.
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   // 6-digit code
+  expiresAt DateTime // 10 minutes from creation
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([code])
+}
+
 // A single fact-check run. One per user submission.
 model FactCheck {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Owner of this fact-check
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // What was submitted
   inputType    String // url | image | video | audio | article | book | social
@@ -36,6 +66,7 @@ model FactCheck {
 
   @@index([createdAt])
   @@index([verdict])
+  @@index([userId])
 }
 
 // A single verifiable claim extracted from the input.

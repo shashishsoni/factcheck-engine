@@ -11,11 +11,13 @@ import {
 /**
  * Prisma-backed implementation of FactCheckRepository.
  * This is the ONLY module that maps domain types <-> Prisma rows.
+ * All queries are scoped by userId when provided (authenticated users).
  */
 export const prismaRepository: FactCheckRepository = {
-  async save(result) {
+  async save(result, userId) {
     const created = await prisma.factCheck.create({
       data: {
+        ...(userId ? { userId } : {}),
         inputType: result.inputType,
         inputRaw: result.inputRaw,
         inputPreview: result.inputPreview,
@@ -38,16 +40,17 @@ export const prismaRepository: FactCheckRepository = {
     return mapRowToResult(created);
   },
 
-  async getById(id) {
-    const row = await prisma.factCheck.findUnique({
-      where: { id },
+  async getById(id, userId) {
+    const row = await prisma.factCheck.findFirst({
+      where: { id, ...(userId ? { userId } : {}) },
       include: { claims: { include: { proofs: true } }, sources: true, messages: { orderBy: { createdAt: "asc" } } },
     });
     return row ? mapRowToResult(row) : null;
   },
 
-  async list(limit = 50, offset = 0) {
+  async list(limit = 50, offset = 0, userId) {
     const rows = await prisma.factCheck.findMany({
+      where: userId ? { userId } : {},
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
@@ -56,8 +59,10 @@ export const prismaRepository: FactCheckRepository = {
     return rows.map((row) => mapRowToResult(row as FactCheckRow));
   },
 
-  async delete(id) {
-    await prisma.factCheck.delete({ where: { id } });
+  async delete(id, userId) {
+    await prisma.factCheck.deleteMany({
+      where: { id, ...(userId ? { userId } : {}) },
+    });
   },
 
   // --- Chat message storage ---

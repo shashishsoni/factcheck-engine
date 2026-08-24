@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaRepository } from "@/lib/storage/prisma-repository";
+import { getUserId } from "@/lib/auth/get-session";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const result = await prismaRepository.getById(id);
+  const userId = await getUserId();
+  const result = await prismaRepository.getById(id, userId ?? undefined);
   if (!result) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -22,8 +24,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const userId = await getUserId();
   try {
-    await prismaRepository.delete(id);
+    await prismaRepository.delete(id, userId ?? undefined);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

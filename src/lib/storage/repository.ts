@@ -13,10 +13,10 @@ import type {
  * Swap implementations (e.g. in-memory for tests) without touching business logic.
  */
 export interface FactCheckRepository {
-  save(result: FactCheckResult): Promise<FactCheckResult>;
-  getById(id: string): Promise<FactCheckResult | null>;
-  list(limit?: number, offset?: number): Promise<FactCheckResult[]>;
-  delete(id: string): Promise<void>;
+  save(result: FactCheckResult, userId?: string): Promise<FactCheckResult>;
+  getById(id: string, userId?: string): Promise<FactCheckResult | null>;
+  list(limit?: number, offset?: number, userId?: string): Promise<FactCheckResult[]>;
+  delete(id: string, userId?: string): Promise<void>;
   // Chat
   saveMessage(factCheckId: string, message: ChatMessageInput): Promise<ChatMessage>;
   getMessages(factCheckId: string): Promise<ChatMessage[]>;

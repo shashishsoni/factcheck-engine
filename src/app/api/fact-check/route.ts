@@ -3,6 +3,7 @@ import { z } from "zod";
 import { verificationEngine } from "@/lib/verification";
 import { prismaRepository } from "@/lib/storage/prisma-repository";
 import { LANGUAGE_MODES, type LanguageMode } from "@/lib/types";
+import { getUserId } from "@/lib/auth/get-session";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // verification can take a while
@@ -25,9 +26,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const userId = await getUserId();
     const language: LanguageMode = parsed.language;
     const result = await verificationEngine.verify(parsed.input, undefined, language);
-    const saved = await prismaRepository.save(result);
+    const saved = await prismaRepository.save(result, userId ?? undefined);
     return NextResponse.json(saved, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Verification failed";
@@ -35,11 +37,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET /api/fact-check — list history (paginated)
+// GET /api/fact-check — list history (paginated, scoped to user)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const limit = Math.min(Number(searchParams.get("limit") ?? 50), 100);
   const offset = Math.max(Number(searchParams.get("offset") ?? 0), 0);
-  const items = await prismaRepository.list(limit, offset);
+  const userId = await getUserId();
+  const items = await prismaRepository.list(limit, offset, userId ?? undefined);
   return NextResponse.json({ items, limit, offset });
 }
