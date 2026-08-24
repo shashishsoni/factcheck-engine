@@ -1,0 +1,126 @@
+// FactChecker schema — decoupled models for fact-checks, claims, sources, and proofs.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// A single fact-check run. One per user submission.
+model FactCheck {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // What was submitted
+  inputType    String // url | image | video | audio | article | book | social
+  inputRaw     String @db.Text // original input (URL, path, identifier)
+  inputPreview String? @db.Text // human-readable preview (title, caption, etc.)
+
+  // Verification result
+  verdict    Verdict  @default(pending)
+  confidence Int      @default(0) // 0-100
+  summary    String?  @db.Text // unbiased summary of findings
+  reasoning  String?  @db.Text // how the verdict was reached
+
+  // Extracted claims to verify
+  claims Claim[]
+
+  // Sources gathered during verification
+  sources Source[]
+
+  // Chat conversation about this fact-check
+  messages ChatMessage[]
+
+  @@index([createdAt])
+  @@index([verdict])
+}
+
+// A single verifiable claim extracted from the input.
+model Claim {
+  id           String   @id @default(cuid())
+  factCheckId  String
+  factCheck    FactCheck @relation(fields: [factCheckId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  text         String   @db.Text // the claim statement
+  verdict      Verdict  @default(pending)
+  confidence   Int      @default(0)
+  explanation  String?  @db.Text
+
+  // Supporting/corroborating/contradicting proofs
+  proofs Proof[]
+
+  @@index([factCheckId])
+}
+
+// A source consulted during verification (article, tweet, official record, etc.)
+model Source {
+  id           String   @id @default(cuid())
+  factCheckId  String
+  factCheck    FactCheck @relation(fields: [factCheckId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  url          String
+  title        String?  @db.Text
+  snippet      String?  @db.Text // extracted relevant excerpt
+  sourceType   String   // web | social | official | academic | news
+  reliability  Int      @default(50) // 0-100 heuristic reliability score
+  accessedAt   DateTime @default(now())
+
+  @@index([factCheckId])
+}
+
+// A piece of evidence tied to a claim (quote, data point, screenshot ref, etc.)
+model Proof {
+  id          String    @id @default(cuid())
+  claimId     String
+  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  kind        ProofKind // supports | contradicts | contextual
+  sourceUrl   String
+  sourceTitle String?   @db.Text
+  excerpt     String    @db.Text
+  note        String?   @db.Text
+
+  @@index([claimId])
+}
+
+enum Verdict {
+  pending
+  true
+  mostly_true
+  mixed
+  mostly_false
+  false
+  unverifiable
+}
+
+enum ProofKind {
+  supports
+  contradicts
+  contextual
+}
+
+// A chat message in the back-and-forth conversation about a fact-check.
+// Users can ask questions, provide counter-arguments, or paste content
+// that couldn't be scraped. The AI re-evaluates with this new context.
+model ChatMessage {
+  id          String   @id @default(cuid())
+  factCheckId String
+  factCheck   FactCheck @relation(fields: [factCheckId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  role    String // "user" | "assistant"
+  content String  @db.Text
+
+  // If the AI updated the verdict based on this message:
+  updatedVerdict    String? // true | mostly_true | mixed | mostly_false | false | unverifiable
+  updatedConfidence Int?
+  updatedSummary    String? @db.Text
+
+  @@index([factCheckId])
+}

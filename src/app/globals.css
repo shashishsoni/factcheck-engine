@@ -1,26 +1,337 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf9;
+  --foreground: #18181b;
+  --accent: #059669;
+  --accent-subtle: #ecfdf5;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --muted: #71717a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #09090b;
+    --foreground: #fafafa;
+    --accent: #10b981;
+    --accent-subtle: #064e3b;
+    --surface: #18181b;
+    --border: #27272a;
+    --muted: #a1a1aa;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Selection color */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Pulse glow for active states */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger helper */
+.stagger > * {
+  opacity: 0;
+  animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(7) { animation-delay: 360ms; }
+.stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+/* Premium flow-line terminal animations */
+@keyframes flow-pulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 0.8; transform: scaleY(1.02); }
+}
+
+@keyframes node-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.2); }
+}
+
+@keyframes fade-up-blur {
+  from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.flow-line-active {
+  animation: flow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.node-active {
+  animation: node-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.fade-up-blur {
+  animation: fade-up-blur 0.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Premium scrollbar for terminal panels */
+.terminal-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.terminal-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 2px;
+}
+.terminal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+/* Neural network — data flow line animation */
+@keyframes data-flow {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+.data-flow-line {
+  stroke-dasharray: 4 4;
+  animation: data-flow 1s linear infinite;
+}
+
+/* Neural network — active node inner glow */
+@keyframes neural-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.15), 0 0 15px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: inset 0 0 30px rgba(16, 185, 129, 0.25), 0 0 25px rgba(16, 185, 129, 0.4);
+  }
+}
+
+.neural-active {
+  animation: neural-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Neural network — node entry animation */
+@keyframes node-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.node-enter {
+  animation: node-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Neural mesh dot grid background */
+.neural-mesh {
+  background-image: radial-gradient(rgba(16, 185, 129, 0.22) 1.2px, transparent 1.2px);
+  background-size: 28px 28px;
+}
+
+/* Stitch-style canvas infinite dot pattern */
+.canvas-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+.canvas-dot-grid-subtle {
+  background-image:
+    radial-gradient(circle, rgba(16, 185, 129, 0.18) 1.2px, transparent 1.2px),
+    radial-gradient(circle, rgba(99, 102, 241, 0.08) 1.5px, transparent 1.5px);
+  background-size: 32px 32px, 96px 96px;
+}
+
+/* Traveling synaptic photon particle animation */
+@keyframes photon-travel {
+  0% { stroke-dashoffset: 120; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.photon-beam {
+  stroke-dasharray: 12 48;
+  animation: photon-travel 1.6s linear infinite;
+}
+
+.photon-beam-fast {
+  stroke-dasharray: 8 36;
+  animation: photon-travel 0.9s linear infinite;
+}
+
+/* Synaptic glow pulse */
+@keyframes synapse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4)) drop-shadow(0 0 12px rgba(16, 185, 129, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+  }
+}
+
+.synapse-active-glow {
+  animation: synapse-glow 2.5s ease-in-out infinite;
+}
+
+/* Canvas glass panels */
+.glass-panel {
+  background: rgba(13, 17, 23, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.7);
+}
+
+.glass-panel-glow {
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.2), 0 16px 48px -8px rgba(0, 0, 0, 0.8);
+}
+
+/* Node card hover transitions */
+.node-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.node-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.7), 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+/* Split Terminal Box Styles */
+.terminal-box {
+  background: #05080e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.terminal-box-active {
+  background: #060a12;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.25), 0 20px 48px -8px rgba(0, 0, 0, 0.9);
+}
+
+.terminal-box-done {
+  background: #05080e;
+  border: 1px solid rgba(39, 39, 42, 0.8);
+}
+
+.terminal-header {
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.terminal-scanline {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Hide scrollbar on canvas */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
