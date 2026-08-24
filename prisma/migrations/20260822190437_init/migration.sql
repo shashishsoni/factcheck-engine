@@ -1,4 +1,4 @@
-pnpm dev-- CreateEnum
+-- CreateEnum
 CREATE TYPE "Verdict" AS ENUM ('pending', 'true', 'mostly_true', 'mixed', 'mostly_false', 'false', 'unverifiable');
 
 -- CreateEnum
