@@ -21,6 +21,7 @@
     "@microsoft/fetch-event-source": "2.0.1",
     "@prisma/client": "^6.19.3",
     "@types/nodemailer": "^8.0.1",
+    "@vercel/analytics": "^2.0.1",
     "cheerio": "^1.2.0",
     "fb-downloader-scrapper": "^3.0.1",
     "geist": "^1.7.2",
