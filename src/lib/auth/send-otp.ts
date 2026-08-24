@@ -1,41 +1,47 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 /**
- * Sends the OTP login code to the user's email via Resend.
+ * Sends the OTP login code to the user's email via Gmail SMTP.
  *
- * In development (no RESEND_API_KEY), the code is returned instead of sent,
- * so the UI can display it on screen for testing.
+ * Setup (2 minutes):
+ *   1. Go to https://myaccount.google.com/security
+ *   2. Enable 2-Step Verification
+ *   3. Search for "App passwords" → create one for "Mail"
+ *   4. Copy the 16-char password
+ *   5. Set in .env:
+ *        GMAIL_USER="yourgmail@gmail.com"
+ *        GMAIL_APP_PASSWORD="xxxx xxxx xxxx xxxx"
  *
- * Get a free API key at https://resend.com/api-keys
- * Free tier: 100 emails/day, 3000/month.
+ * Without GMAIL_USER / GMAIL_APP_PASSWORD, the code is returned for on-screen
+ * display (dev mode) so the UI can show it for local testing.
  *
- * For production with your own domain, set:
- *   RESEND_API_KEY="re_xxxxxxxx"
- *   RESEND_FROM_EMAIL="noreply@yourdomain.com"
- *
- * For quick testing without a custom domain, Resend provides:
- *   onboarding@resend.dev (only sends to YOUR account email)
+ * Gmail free limits: ~500 emails/day. Good for small apps / testing.
  */
-
-const DEFAULT_FROM = "FactChecker <noreply@resend.dev>";
+const DEFAULT_FROM_NAME = "FactChecker";
 
 export async function sendOtpEmail(
   email: string,
   code: string,
 ): Promise<{ sent: boolean; devCode?: string; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
-  // No API key → dev mode, return the code for on-screen display
-  if (!apiKey) {
+  // No credentials → dev mode, return the code for on-screen display
+  if (!gmailUser || !gmailPass) {
     return { sent: false, devCode: code };
   }
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM;
-
   try {
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: fromEmail,
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: `${DEFAULT_FROM_NAME} <${gmailUser}>`,
       to: email,
       subject: "Your FactChecker login code",
       html: `
@@ -59,11 +65,7 @@ export async function sendOtpEmail(
       text: `Your FactChecker login code is: ${code}\n\nIt expires in 10 minutes.\n\nIf you didn't request this code, you can safely ignore this email.`,
     });
 
-    if (error) {
-      console.error("[auth] Resend error:", error);
-      return { sent: false, error: error.message };
-    }
-
+    console.log(`[auth] OTP email sent to ${email}: ${info.messageId}`);
     return { sent: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";
