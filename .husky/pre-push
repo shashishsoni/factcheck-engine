@@ -1,2 +1,2 @@
-﻿echo "Running pre-push checks (lint + typecheck)..."
+echo "Running pre-push checks (lint + typecheck)..."
 pnpm prepush:check
